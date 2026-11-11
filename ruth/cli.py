@@ -259,7 +259,23 @@ def cmd_app(args):
     serve(args.host, args.port, open_browser=not args.no_browser, home=args.home)
 
 
-def main(argv=None):
+def cmd_reference(args):
+    """Print the command surface, generated from the parser that runs it.
+
+    The README command table is kept honest against this output by
+    tests/test_docs.py, so the published surface cannot drift from the flags
+    the CLI actually accepts.
+    """
+    from . import reference
+    sys.stdout.write(reference.render(build_parser(), args.format))
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """The single parser that both runs commands and renders the reference.
+
+    One grammar means `ruth reference` can never diverge from the commands that
+    actually execute.
+    """
     p = argparse.ArgumentParser(prog="ruth", description="Ruth: a token-free continuous mind.")
     p.add_argument("--version", action="version", version=f"ruth {__version__}")
     p.add_argument("--home", help="where her mind lives (default: $RUTH_HOME or the OS data dir)")
@@ -324,7 +340,15 @@ def main(argv=None):
     s.add_argument("-m", "--message")
     s.add_argument("--no-commit", action="store_true")
     s.set_defaults(fn=cmd_evolve)
+    s = sub.add_parser("reference", help="print this command reference (generated from the CLI)")
+    s.add_argument("-f", "--format", choices=["markdown", "json"], default="markdown",
+                   help="output format (default: markdown)")
+    s.set_defaults(fn=cmd_reference)
+    return p
 
+
+def main(argv=None):
+    p = build_parser()
     args = p.parse_args(argv)
     if args.cmd == "evolve" and args.kind == "patch" and not args.patch:
         p.error("evolve patch needs a patch file")

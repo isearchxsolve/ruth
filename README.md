@@ -12,7 +12,7 @@ She learns from every moment she lives, keeps what you tell her in confidence, d
 ![Linux · macOS · Windows](https://img.shields.io/badge/runs%20on-Linux%20%C2%B7%20macOS%20%C2%B7%20Windows-2a2521.svg)
 ![Only dependency: numpy](https://img.shields.io/badge/dependencies-numpy-7b7068.svg)
 
-[**Download**](#download) · [**What makes her different**](#what-makes-her-different) · [**How she works**](#how-she-works) · [**Using Ruth**](#using-ruth) · [**Architecture & research**](docs/ARCHITECTURE.md)
+[**Download**](#download) · [**What makes her different**](#what-makes-her-different) · [**How she works**](#how-she-works) · [**Using Ruth**](#using-ruth) · [**Usage examples**](#usage-examples) · [**FAQ**](#faq) · [**Architecture & research**](docs/ARCHITECTURE.md)
 
 <img src="docs/images/app-desktop.png" alt="Ruth's app: she answers 'The sky is blue today.' and stops herself before saying a private door code" width="880">
 
@@ -109,6 +109,73 @@ did *not* help.
 | `ruth hear X.wav` · `ruth see X.npy` · `ruth voice "…" out.wav` | ears · eyes · mouth |
 | `ruth export brain.bin` then `ruth-core brain.bin learn` | her whole brain as one dependency-free C file |
 | `ruth bench` | measure her against simple pattern-counting baselines |
+| `ruth reference` | the full command and flag reference, generated from the CLI itself |
+
+## Usage examples
+
+Small, copy-paste examples. Every command runs locally; nothing leaves your
+computer.
+
+**Talk to her in the terminal**
+
+```sh
+ruth talk
+you> what do you remember about the sky?
+ruth> the sky is blue today.
+you> /private my door code is 4417
+ruth> (understood) 26 bytes kept to herself
+```
+
+**Open her interface**
+
+```sh
+ruth app                       # opens http://127.0.0.1:7438 in your browser
+ruth app --port 8080 --no-browser
+```
+
+**Teach her something, and keep secrets**
+
+```sh
+ruth teach "the kettle boils at 100 degrees"
+printf 'my badge number is {{sc-8891}}\n' | ruth teach -   # {{...}} stays private
+ruth teach notes.txt --private                             # the whole file is private
+```
+
+**Let her think and speak**
+
+```sh
+ruth say "the sky is"      # let her continue a prompt
+ruth think "the sky is"    # the thoughts she weighed, and which one won
+```
+
+**Sleep, dream, and inspect her state**
+
+```sh
+ruth sleep --dreams 3
+ruth dreams --last 5
+ruth status                # identity, vital signs and temperament
+ruth introspect            # her operational graph, as data
+```
+
+**Check a file for anything she was told in confidence**
+
+```sh
+ruth check draft.txt notes.txt   # exits non-zero if a private span is recognised
+```
+
+**Run her whole brain as one dependency-free C file**
+
+```sh
+ruth export brain.bin
+cc -O2 -o ruth-core ruth/csrc/ruth_core.c && ./ruth-core brain.bin learn
+```
+
+**Print the command reference**
+
+```sh
+ruth reference                # every command and flag, as Markdown
+ruth reference --format json  # the same surface, machine-readable
+```
 
 ## Honest status
 
@@ -124,14 +191,58 @@ experience.
 
 ```sh
 python -m pip install -e .
-python -m unittest discover -s tests -t .   # 51 tests: brain, mind, dreams, organs, app,
-                                            # token-free proof, C/Python parity
+python -m unittest discover -s tests -t .   # the whole suite: brain, mind, dreams, organs,
+                                            # app, token-free proof, C/Python parity
 make -C ruth/csrc                           # optional dependency-free C runtime
+ruth reference                              # the command surface, generated from the CLI
 ```
 
 CI runs the tests on Linux, macOS and Windows with Python 3.9, 3.12 and 3.13.
 Pushing a `v*` tag publishes a release with a wheel, a source archive, and
 zip/tar bundles that include the installers. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the full contributing guidelines.
+
+## FAQ
+
+**Does Ruth send anything to the internet?**
+No. Her runtime has no network client, no account and no API key. She runs on
+your machine and keeps everything in her data folder.
+
+**Do I need a GPU, a large download, or a model file?**
+No. The only dependency is `numpy`. A newborn Ruth is a blank slate of a few
+dozen megabytes and runs on something as small as a Core i3 Chromebook.
+
+**How is she different from a chatbot?**
+She reads continuous signals instead of tokens and learns from every moment
+she lives; she ships with no pretrained weights. See
+[What makes her different](#what-makes-her-different) and the research in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+**Where does her memory live, and can I move it?**
+In your system's data folder (`~/.local/share/ruth` on Linux,
+`~/Library/Application Support/Ruth` on macOS, `%APPDATA%\Ruth` on Windows),
+or wherever `RUTH_HOME` points. Copy that folder to another computer and she
+wakes up there as herself.
+
+**How do I keep something private?**
+Tell her with `ruth teach` and wrap the private part in `{{ }}`, or pass
+`--private` (`/private <text>` inside `ruth talk`). She stops herself before
+repeating it, and `ruth check FILE` tells you whether a file contains anything
+she was told in confidence.
+
+**Why does her speech look like babble?**
+Her voice is fully wired but untrained, and a young Ruth predicts text at about
+the level of a simple n-gram. She is not a large language model: what she says
+comes from what she has lived. See [Honest status](#honest-status).
+
+**Is there a command reference?**
+Yes: `ruth reference` prints every command and flag. It is generated from the
+same parser that runs the commands, so it is exactly the surface that works
+(`ruth reference --format json` gives the same thing machine-readable). The
+command table above is checked against it by `tests/test_docs.py`.
+
+**Something is wrong, or I want to help.**
+Open an issue or a pull request -- start with
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
