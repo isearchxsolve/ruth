@@ -39,3 +39,12 @@ version = { attr = "ruth.__version__" }
 [tool.setuptools.package-data]
 "ruth.csrc" = ["ruth_core.c", "Makefile"]
 "ruth.app.static" = ["*.html", "*.js", "*.css", "*.svg"]
+
+# `ruth docs` reads the shipped documents. A wheel/copy install places them
+# under the prefix's share/ folder so the command works away from the source
+# tree; ruth/docs.py looks there as its last resort. data-files keeps only the
+# basename, so the architecture notes get their own `docs/` target to preserve
+# the relative path the reader expects.
+[tool.setuptools.data-files]
+"share/ruth" = ["README.md", "CONTRIBUTING.md"]
+"share/ruth/docs" = ["docs/ARCHITECTURE.md"]

@@ -259,6 +259,31 @@ def cmd_app(args):
     serve(args.host, args.port, open_browser=not args.no_browser, home=args.home)
 
 
+# ---------------------------------------------------------------- docs
+def cmd_docs(args):
+    """Read the project's own documentation, or check that it is complete.
+
+    Read-only and mind-free: no lock, no brain, so it works while `ruth app`
+    owns her. `--check` turns the issue's documentation contract into an exit
+    code, so a regression in the shipped docs fails a build like a code test.
+    """
+    from . import docs
+    try:
+        if args.check:
+            problems = docs.audit(root=args.dir)
+            _out({"ok": not problems, "problems": problems})
+            if problems:
+                sys.exit(1)
+            return
+        if args.json:
+            _out(docs.payload(args.topic, args.section, root=args.dir))
+        else:
+            sys.stdout.write(docs.document(args.topic, args.section, root=args.dir))
+    except docs.DocsError as exc:
+        sys.stderr.write(f"ruth docs: {exc}\n")
+        raise SystemExit(2)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="ruth", description="Ruth: a token-free continuous mind.")
     p.add_argument("--version", action="version", version=f"ruth {__version__}")
@@ -315,6 +340,15 @@ def main(argv=None):
     s = sub.add_parser("export", help="write her brain for the C runtime")
     s.add_argument("out")
     s.set_defaults(fn=cmd_export)
+    s = sub.add_parser("docs", help="read the project's documentation offline")
+    s.add_argument("topic", nargs="?",
+                   help="readme, contributing, architecture, or faq/usage")
+    s.add_argument("section", nargs="?", help="a section title inside the topic")
+    s.add_argument("--dir", help="folder holding the shipped documents")
+    s.add_argument("--json", action="store_true", help="emit JSON instead of text")
+    s.add_argument("--check", action="store_true",
+                   help="verify the shipped documentation and exit non-zero on a gap")
+    s.set_defaults(fn=cmd_docs)
     s = sub.add_parser("evolve", help="gated self-improvement")
     s.add_argument("kind", choices=["config", "patch"])
     s.add_argument("patch", nargs="?")
