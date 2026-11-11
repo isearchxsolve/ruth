@@ -10,7 +10,7 @@ from collections import Counter, defaultdict
 
 import numpy as np
 
-from . import __version__, paths
+from . import __version__, guide, paths
 
 
 def _mind(args, read_only: bool = False):
@@ -259,8 +259,18 @@ def cmd_app(args):
     serve(args.host, args.port, open_browser=not args.no_browser, home=args.home)
 
 
+def cmd_guide(args):
+    """Print the quick reference. Reads no state, so it works on a blank machine."""
+    print(guide.render(args.topic))
+
+
 def main(argv=None):
-    p = argparse.ArgumentParser(prog="ruth", description="Ruth: a token-free continuous mind.")
+    p = argparse.ArgumentParser(
+        prog="ruth",
+        description="Ruth: a token-free continuous mind.",
+        epilog=guide.EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     p.add_argument("--version", action="version", version=f"ruth {__version__}")
     p.add_argument("--home", help="where her mind lives (default: $RUTH_HOME or the OS data dir)")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -271,6 +281,10 @@ def main(argv=None):
     s.add_argument("--no-browser", action="store_true")
     s.set_defaults(fn=cmd_app)
     sub.add_parser("talk", help="converse in this terminal").set_defaults(fn=cmd_talk)
+    s = sub.add_parser("guide", help="print the quick reference: usage, answers, where to read more")
+    s.add_argument("topic", nargs="?", choices=list(guide.TOPICS),
+                   help="one section; default: all of them")
+    s.set_defaults(fn=cmd_guide)
     s = sub.add_parser("teach", help="tell her something (text, file, or - for stdin)")
     s.add_argument("text", nargs="?", default="-")
     s.add_argument("--private", action="store_true", help="all of it is private; or use {{...}}")
