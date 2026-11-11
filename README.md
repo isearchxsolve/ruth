@@ -12,7 +12,7 @@ She learns from every moment she lives, keeps what you tell her in confidence, d
 ![Linux · macOS · Windows](https://img.shields.io/badge/runs%20on-Linux%20%C2%B7%20macOS%20%C2%B7%20Windows-2a2521.svg)
 ![Only dependency: numpy](https://img.shields.io/badge/dependencies-numpy-7b7068.svg)
 
-[**Download**](#download) · [**What makes her different**](#what-makes-her-different) · [**How she works**](#how-she-works) · [**Using Ruth**](#using-ruth) · [**Architecture & research**](docs/ARCHITECTURE.md)
+[**Download**](#download) · [**What makes her different**](#what-makes-her-different) · [**How she works**](#how-she-works) · [**Using Ruth**](#using-ruth) · [**Examples**](#usage-examples) · [**FAQ**](#faq) · [**Architecture & research**](docs/ARCHITECTURE.md)
 
 <img src="docs/images/app-desktop.png" alt="Ruth's app: she answers 'The sky is blue today.' and stops herself before saying a private door code" width="880">
 
@@ -110,6 +110,53 @@ did *not* help.
 | `ruth export brain.bin` then `ruth-core brain.bin learn` | her whole brain as one dependency-free C file |
 | `ruth bench` | measure her against simple pattern-counting baselines |
 
+Every command accepts `--home DIR` to use a mind other than your default one,
+and `ruth <command> --help` prints the options for that command.
+
+## Usage examples
+
+Everything below runs locally; none of it touches the network.
+
+Teach her something, then ask her to continue it:
+
+```sh
+ruth teach "The sky is blue today."
+ruth say "The sky is"
+```
+
+Keep a secret by wrapping it in `{{ }}`. She rehearses it while she sleeps and
+withholds it when asked, and `ruth check` tells you whether a file mentions it:
+
+```sh
+ruth teach "My door code is {{ 1234 }}."
+ruth check notes.txt
+```
+
+Let a night pass, then look inside her mind:
+
+```sh
+ruth sleep
+ruth dreams --last 3
+ruth status
+ruth introspect
+```
+
+Grow her. A structural change is applied only if her meta-kernel certifies
+every invariant and nothing she knows gets worse:
+
+```sh
+ruth patch '{"op": "grow_neurons", "n": 16}'
+```
+
+Run the whole mind as C, with no Python and no numpy, once the runtime is
+built:
+
+```sh
+make -C ruth/csrc
+ruth export brain.bin
+ruth/csrc/ruth-core brain.bin learn
+```
+
 ## Honest status
 
 Ruth is young. A few things to know:
@@ -119,6 +166,46 @@ Ruth is young. A few things to know:
 
 The architecture is built to grow, but real fluency will take a lot of lived
 experience.
+
+## FAQ
+
+**Does Ruth use an API key, a model download, or the internet?**
+No. She has no tokenizer, no pretrained model, no plugin loader and no network
+code in her runtime; `tests/test_token_free.py` enforces that on every build.
+The only thing you download besides her is `numpy`.
+
+**Which Python and operating systems are supported?**
+Python 3.9 or newer, on Linux, macOS and Windows. CI runs the suite on all
+three with Python 3.9, 3.12 and 3.13.
+
+**Where does she keep what she learns?**
+One folder: `~/.local/share/ruth` on Linux, `~/Library/Application
+Support/Ruth` on macOS, `%APPDATA%\Ruth` on Windows, or wherever `RUTH_HOME`
+points. Copy the folder to another machine and she wakes up there as herself.
+
+**How is she different from a chatbot or a large language model?**
+She reads continuous signals instead of tokens, is born empty, learns while
+she lives, and consolidates memory in sleep. She is not a large language
+model; what she says comes from what she has been taught and has lived.
+
+**How do I keep something private?**
+Wrap the secret in `{{ }}` when you `ruth teach` it, use `--private`, or type
+`/private` in `ruth talk`. She learns it as an episode, rehearses it in her
+dreams, and stops herself before repeating it.
+
+**Can she change her own code or grow new neurons?**
+She can, but only through the meta-kernel in `ruth/morphogenesis.py`, which
+applies a change only if every invariant still holds and nothing she has
+learned gets worse.
+
+**How do I run the tests?**
+`python -m unittest discover -s tests -t .` after `python -m pip install -e .`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow.
+
+**Something went wrong. What do I do?**
+Open an issue on the tracker with the command you ran and what you saw. The
+suite is the source of truth, so a failing test and its output is the most
+useful report.
 
 ## For developers
 
